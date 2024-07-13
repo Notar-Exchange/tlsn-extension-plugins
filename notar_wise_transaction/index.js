@@ -1,17 +1,33 @@
-function isValidHost(urlString) {
+function isOnWiseAllTransactionsPage(urlString) {
   const url = new URL(urlString);
-  return url.hostname === "twitter.com" || url.hostname === "x.com";
+  return url.hostname === "wise.com" && url.pathname == "/all-transactions";
 }
 
-function gotoTwitter() {
+function isOnWiseTransactionDetailsPage(urlString) {
+  const url = new URL(urlString);
+  console.log(url.pathname, url.pathname.startsWith("/transactions/activities/by-resource/"));
+  return url.hostname === "wise.com" && url.pathname.startsWith("/transactions/activities/by-resource/TRANSFER/");
+}
+
+function getTransactionIDFromDetailsPageURL(urlString) {
+  const url = new URL(urlString);
+  const path = url.pathname;
+  const parts = path.split("/transactions/activities/by-resource/TRANSFER/");
+  return parseInt(parts[parts.length - 1]);
+}
+
+// Redirects to the login page with a redirect URL set to the all transactions page
+// Doing it this way, we don't need to check any cookies or headers
+function redirectToWiseAllTransactionsPage() {
   const { redirect } = Host.getFunctions();
-  const mem = Memory.fromString("https://x.com");
+  const mem = Memory.fromString("https://wise.com/login?redirectUrl=%2Fall-transactions");
   redirect(mem.offset);
 }
 
+// has to be called start
 function start() {
-  if (!isValidHost(Config.get("tabUrl"))) {
-    gotoTwitter();
+  if (!isOnWiseAllTransactionsPage(Config.get("tabUrl"))) {
+    redirectToWiseAllTransactionsPage();
     Host.outputString(JSON.stringify(false));
     return;
   }
@@ -19,60 +35,69 @@ function start() {
   Host.outputString(JSON.stringify(true));
 }
 
-function two() {
-  const cookies = JSON.parse(Config.get("cookies"))["api.x.com"];
-  const headers = JSON.parse(Config.get("headers"))["api.x.com"];
-  if (
-    !cookies.auth_token ||
-    !cookies.ct0 ||
-    !headers["x-csrf-token"] ||
-    !headers["authorization"]
-  ) {
+function step_two() {
+  if (!isOnWiseTransactionDetailsPage(Config.get("tabUrl"))) {
     Host.outputString(JSON.stringify(false));
     return;
   }
 
-  Host.outputString(
-    JSON.stringify({
-      url: "https://api.x.com/1.1/account/settings.json",
+  const url = "https://wise.com/api/v3/payment/details?simplifiedResult=0&paymentId=" + getTransactionIDFromDetailsPageURL(Config.get("tabUrl"));
+
+  const cookies = JSON.parse(Config.get('cookies'))['wise.com'];
+  const headers = JSON.parse(Config.get('headers'))['wise.com'];
+
+  const cookieString = Object.entries(cookies)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ');
+
+  console.log(JSON.stringify({
+      url: url,
       method: "GET",
-      headers: {
-        "x-twitter-client-language": "en",
-        "x-csrf-token": headers["x-csrf-token"],
-        Host: "api.x.com",
-        authorization: headers.authorization,
-        Cookie: `lang=en; auth_token=${cookies.auth_token}; ct0=${cookies.ct0}`,
-        "Accept-Encoding": "identity",
-        Connection: "close",
-      },
+      headers: headers,
       secretHeaders: [
-        `x-csrf-token: ${headers["x-csrf-token"]}`,
-        `cookie: lang=en; auth_token=${cookies.auth_token}; ct0=${cookies.ct0}`,
-        `authorization: ${headers.authorization}`,
+        `cookie: ${cookieString}`,
       ],
     })
   );
+
+  Host.outputString(
+    JSON.stringify({
+      url: url,
+      method: "GET",
+      headers: headers,
+      secretHeaders: [
+        `cookie: ${cookieString}`,
+      ],
+    })
+  );
+  return;
 }
 
-function parseTwitterResp() {
+function parseWiseTransactionDetailsResponse() {
+  console.log("Parse response");
   const bodyString = Host.inputString();
   const params = JSON.parse(bodyString);
 
-  if (params.screen_name) {
-    const revealed = `"screen_name":"${params.screen_name}"`;
+  if (params.internalStatus == "TRANSFERRED") {
+    // const revealed = `"screen_name":"${params.screen_name}"`;
+    const revealed = bodyString; // reveal entire body string for now
+
     const selectionStart = bodyString.indexOf(revealed);
     const selectionEnd = selectionStart + revealed.length;
+
     const secretResps = [
       bodyString.substring(0, selectionStart),
       bodyString.substring(selectionEnd, bodyString.length),
     ];
+
     Host.outputString(JSON.stringify(secretResps));
   } else {
     Host.outputString(JSON.stringify(false));
   }
 }
 
-function three() {
+function step_three() {
+  console.log("Start notarize");
   const params = JSON.parse(Host.inputString());
   const { notarize } = Host.getFunctions();
 
@@ -82,7 +107,7 @@ function three() {
     const mem = Memory.fromString(
       JSON.stringify({
         ...params,
-        getSecretResponse: "parseTwitterResp",
+        getSecretResponse: "parseWiseTransactionDetailsResponse",
       })
     );
     const idOffset = notarize(mem.offset);
@@ -95,24 +120,26 @@ function config() {
   Host.outputString(
     JSON.stringify({
       title: "Wise Transaction",
-      description: "Make and Notarize a transaction on Wise.com",
+      description: "Notarize a transaction on Wise.com",
       icon: "",
       steps: [
         {
-          title: "Visit wise.com",
-          cta: "Go to wise.com",
+          title: "Visit the All Transactions page",
+          description: "Go to wise.com and log into your Wise account if you haven't already, then visit the all transactions page (/all-transactions) and click the button below to confirm",
+          cta: "Confirm",
           action: "start",
         },
         {
-          title: "Collect credentials",
-          description: "Login to your account if you haven't already",
-          cta: "Check cookies",
-          action: "two",
+          title: "Open the transaction you want to notarize",
+          description: "In the transactions list, click on the transaction to view its details, then click the button below to confirm",
+          cta: "Confirm",
+          action: "step_two",
         },
         {
-          title: "Notarize twitter profile",
+          title: "Notarize transaction",
+          description: "This can take a few minutes to run",
           cta: "Notarize",
-          action: "three",
+          action: "step_three",
           prover: true,
         },
       ],
@@ -121,7 +148,7 @@ function config() {
       headers: ["wise.com"],
       requests: [
         {
-          url: "https://api.x.com/1.1/account/settings.json", // todo
+          url: "https://wise.com/api/v3/payment/details", // ?paymentId=BLABLA&simplifiedResult=0
           method: "GET",
         },
       ],
@@ -129,4 +156,4 @@ function config() {
   );
 }
 
-module.exports = { start, config, two, three, parseTwitterResp };
+module.exports = { start, config, step_two, step_three, parseWiseTransactionDetailsResponse };

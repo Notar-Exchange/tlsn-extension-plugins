@@ -1,9 +1,9 @@
 declare module 'main' {
   // Extism exports take no params and return an I32
   export function start(): I32;
-  export function two(): I32;
-  export function parseTwitterResp(): I32;
-  export function three(): I32;
+  export function step_two(): I32;
+  export function parseWiseTransactionDetailsResponse(): I32;
+  export function step_three(): I32;
   export function config(): I32;
 }
 
