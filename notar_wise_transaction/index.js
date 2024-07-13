@@ -41,22 +41,28 @@ function step_two() {
     return;
   }
 
-  const url = "https://wise.com/api/v3/payment/details?simplifiedResult=0&paymentId=" + getTransactionIDFromDetailsPageURL(Config.get("tabUrl"));
+  console.log("Alive!");
+
+  const url = "https://wise.com/api/v3/payment/details?simplifiedResult=1&paymentId=1134695358"; //+ getTransactionIDFromDetailsPageURL(Config.get("tabUrl"));
+
+  console.log("Using", url);
 
   const cookies = JSON.parse(Config.get('cookies'))['wise.com'];
   const headers = JSON.parse(Config.get('headers'))['wise.com'];
+
+  console.log("Still alive!");
 
   const cookieString = Object.entries(cookies)
     .map(([key, value]) => `${key}=${value}`)
     .join('; ');
 
+  console.log("Woohoo");
+  headers['Cookie'] = cookieString;
+
   console.log(JSON.stringify({
       url: url,
       method: "GET",
-      headers: headers,
-      secretHeaders: [
-        `cookie: ${cookieString}`,
-      ],
+      headers: headers
     })
   );
 
@@ -64,12 +70,13 @@ function step_two() {
     JSON.stringify({
       url: url,
       method: "GET",
-      headers: headers,
-      secretHeaders: [
-        `cookie: ${cookieString}`,
-      ],
+      headers: {
+        Cookie: `oauthToken=${cookies.oauthToken};`,
+      }
     })
   );
+
+  console.log("OMG!");
   return;
 }
 
@@ -77,10 +84,11 @@ function parseWiseTransactionDetailsResponse() {
   console.log("Parse response");
   const bodyString = Host.inputString();
   const params = JSON.parse(bodyString);
+  console.log("Params: ", JSON.stringify(params));
 
   if (params.internalStatus == "TRANSFERRED") {
     // const revealed = `"screen_name":"${params.screen_name}"`;
-    const revealed = bodyString; // reveal entire body string for now
+    // const revealed = bodyString.substring(1, 10); // reveal 1st to 10th character for now
 
     const selectionStart = bodyString.indexOf(revealed);
     const selectionEnd = selectionStart + revealed.length;
@@ -90,6 +98,8 @@ function parseWiseTransactionDetailsResponse() {
       bodyString.substring(selectionEnd, bodyString.length),
     ];
 
+    console.log("Revealing", selectionStart, "to", selectionEnd);
+    console.log(JSON.stringify(secretResps));
     Host.outputString(JSON.stringify(secretResps));
   } else {
     Host.outputString(JSON.stringify(false));
@@ -107,7 +117,7 @@ function step_three() {
     const mem = Memory.fromString(
       JSON.stringify({
         ...params,
-        getSecretResponse: "parseWiseTransactionDetailsResponse",
+        // getSecretResponse: "parseWiseTransactionDetailsResponse",
       })
     );
     const idOffset = notarize(mem.offset);
@@ -120,18 +130,18 @@ function config() {
   Host.outputString(
     JSON.stringify({
       title: "Wise Transaction",
-      description: "Notarize a transaction on Wise.com",
+      description: "Notarize a transaction and submit it as proof to claim crpyto in escrow",
       icon: "",
       steps: [
         {
-          title: "Visit the All Transactions page",
-          description: "Go to wise.com and log into your Wise account if you haven't already, then visit the all transactions page (/all-transactions) and click the button below to confirm",
+          title: "Visit Wise.com -> All Transactions",
+          description: "Go to wise.com and log into your Wise account, then visit the all transactions page",
           cta: "Confirm",
           action: "start",
         },
         {
-          title: "Open the transaction you want to notarize",
-          description: "In the transactions list, click on the transaction to view its details, then click the button below to confirm",
+          title: "Open the transaction you want to notarize and send as proof",
+          description: "In the transactions list, click on the transaction to view its details",
           cta: "Confirm",
           action: "step_two",
         },
@@ -148,7 +158,7 @@ function config() {
       headers: ["wise.com"],
       requests: [
         {
-          url: "https://wise.com/api/v3/payment/details", // ?paymentId=BLABLA&simplifiedResult=0
+          url: `https://wise.com/api/v3/payment/details?simplifiedResult=1&paymentId=1134695358`,
           method: "GET",
         },
       ],
