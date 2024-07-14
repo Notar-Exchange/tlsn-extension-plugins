@@ -43,7 +43,7 @@ function step_two() {
 
   console.log("Alive!");
 
-  const url = "https://wise.com/api/v3/payment/details?simplifiedResult=1&paymentId=1134695358"; //+ getTransactionIDFromDetailsPageURL(Config.get("tabUrl"));
+  const url = "https://wise.com/api/v3/payment/details?simplifiedResult=1&paymentId=" + getTransactionIDFromDetailsPageURL(Config.get("tabUrl"));
 
   console.log("Using", url);
 
@@ -130,8 +130,8 @@ function config() {
   Host.outputString(
     JSON.stringify({
       title: "Wise Transaction",
-      description: "Notarize a transaction and submit it as proof to claim crpyto in escrow",
-      icon: "",
+      description: "Notarize a transaction and submit it as proof to claim crypto in escrow",
+      icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUAAAAFABAMAAAA/vriZAAAAIVBMVEWf6HAWMwAUMQAbOgSY32pglT1wqklIdSmFxls4YBwoSw89vLKWAAAFC0lEQVR42u2dv09aURTHGZ5Ix/eINbIBMQY3MaDt9AapwQmDXTrRmHRgAmvSlaRpG900tLGjpjH+mU20pXp/wHnh3nOu9PuZTTh53Pv9nl8PczkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBF5ctbd4x8BNjedsbrno8A8/XYEUnNyxOMLlwFGK/6OYT9sqsneOsnwH1XAVbGfgIs3DgKsNjxJDRdR49wc+QpwDNHAa6lngLMb7kJsOHLS6ITN5f4zpvbORKaU28B7juJr9rzFqAboamNvAWYO3QR4EbqL0AXQuPL6JwJTTL2GKCLjCbpeAzQhdAURz4DdJDRrKU+A3QgNCt+S6e5MxqPRnfP+dwBnvoNcGluoen5DXBuoamN/AaYOw6zonOW0SRN3wGqQjOjibDFaXQPDJ9+4o8PU3mn3vqB9wCfZjTJ1YwjW+Y0OlNGM8MYTliNziQ004vcwiWv0RmEZrozqAmkb6MzZTTNLNmPb6MzCc3UU6Vad7HHEGDUpbeCDllalzOE5i6Dc2+wtNOVjGZnymlQjaTJEqDyXEr2c7XEb3TZhKat3pEBT4BkoREwOpPQlFKq0dVSngAV9bAKjYjRmfTXJjTa7GeXK0BFaGz9KhGjexCap9/dZo9Yo/a4AlSFZkxrJ26O2AJUvryXRKNL2QJUhcb4aArX3BXdo4ejKFyH1IX4xRdg/oaQKEsZnel+Gk9XXyJbNcqMRWiGZfaKztb/MGbKckaXi4aU0YJqdCwV3Z/rWad8w6rRVdiMTu/1N0hG1xFS6TiuHpn+7L3yVyU2ozsjTd+0g8pmdAXVYqtXFKOLm1IaE6+NKEbHdokjdVRi+WQxo6NpjFBbxqgxTVq2ymV02tkvHoVV0WlD99U0qIpOUzfbkolW0Y2FNMbW8dPuCJPRaePYO1Ldx1bRvbmhaYyY0akaYy3U1NZl0uDRmAuaxhgqOh6jO0uUj91Jia1LhhmdUWPGxLIv2WYxuladlMfcV3QiRteNqQdLq0t3OALMXxM1RsrotCqosacyOQwiMzr1a4tf/VT4ntpSCg6j+zZ7p2fFVtFxGF30kb72JGJ0rdk7R5OTprUuOYyOsDo42e+VGLTnZy/m/etxvRCo6ChrbxuCFV2BslTWtFV0Jf93pJ1lvzfir+gIGvNov1fA6FqUV8Im0+Al/orumLIZWrMZnd/VaWPLMjSjO8+238tudHoeE5jREddCe1IVXTQkLU9PThp7RUfcnZ60udiNrp9xv7fLbHTEFwzsRrfO3bK0MLAlZp7nD9Tl+InRtZiNjrp6PukdtHkruoj6BsmKUOuyVa/QkKroWp+I/O0URsxGt0cltcg646CdxrKqj4PAAhSb0ZGbiGWpQTtRli5pozIxNKPbDewbFqjoMlb47BVd1gKV3McWQmb+kOESS7QuM13i52Z08WlgAQquTi+I0Snbwcl6YJe4ELzRqcngFYxuwY2uFtgdUY0uhtHN2SYphpatPr+KLrQ7chJ4RVdgbl3OX9GFbnSV0Izuc+BGFx2GbnQXMDrHFd0gdKMLLlt9ZhUdjG7hKjrt/YejwI0uuGw1dKPbuxB7GXZRjS60iu4ARgejwyXOZHTF4OYPfL867cbogpvRhW502ot+t4EFuBwHPmg/UBalqqEZXV/9HymBGV3uq/r7pjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAID/kN+RAqoX314acgAAAABJRU5ErkJggg==",
       steps: [
         {
           title: "Visit Wise.com -> All Transactions",
@@ -158,7 +158,7 @@ function config() {
       headers: ["wise.com"],
       requests: [
         {
-          url: `https://wise.com/api/v3/payment/details?simplifiedResult=1&paymentId=1134695358`,
+          url: `https://wise.com/api/v3/payment/details?simplifiedResult=1&paymentId=*`,
           method: "GET",
         },
       ],
